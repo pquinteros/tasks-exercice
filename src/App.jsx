@@ -1,129 +1,96 @@
-import { useState } from "react";
-import ProjectSidebar from "./components/ProjectSidebar";
-import NewProject from './components/NewProject';
-import NoProjectSelected from './components/NoProjectSelected';
-import SelectedProject from './components/SelectedProject';
+import React, { useReducer } from 'react';
 
-function App() {
-  const [projectsState, setProjectsState] = useState({
-    selectedProjectId: undefined,
-    projects: [],
-    tasks: [],
-  });
+// Estado inicial
+const initialState = {
+  cart: [],
+};
 
-  function handleAddTask(text) {
-    setProjectsState((prevState) => {
-      const taskId = Math.random();
-      const newTask = {
-        text: text,
-        projectId: prevState.selectedProjectId,
-        id: taskId,
-      };
-
+// Reducer
+function cartReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_ITEM':
       return {
-        ...prevState,
-        tasks: [newTask, ...prevState.tasks],
+        ...state,
+        cart: [...state.cart, action.payload],
       };
-    });
-  }
-
-  function handleDeleteTask(id) {
-    setProjectsState((prevState) => {
+    case 'REMOVE_ITEM':
       return {
-        ...prevState,
-        tasks: prevState.tasks.filter((task) => task.id !== id),
+        ...state,
+        cart: state.cart.filter(item => item.id !== action.payload),
       };
-    });
-  }
-
-  function handleSelectProject(id) {
-    setProjectsState((prevState) => {
+    case 'CLEAR_CART':
       return {
-        ...prevState,
-        selectedProjectId: id,
+        ...state,
+        cart: [],
       };
-    });
+    default:
+      return state;
   }
-
-  function handleStartAddProject() {
-    setProjectsState((prevState) => {
-      return {
-        ...prevState,
-        selectedProjectId: null,
-      };
-    });
-  }
-
-  function handleCancelAddProject() {
-    setProjectsState((prevState) => {
-      return {
-        ...prevState,
-        selectedProjectId: undefined,
-      };
-    });
-  }
-
-  function handleAddProject(projectData) {
-    setProjectsState((prevState) => {
-      const projectId = Math.random();
-      const newProject = {
-        ...projectData,
-        id: projectId,
-      };
-
-      return {
-        ...prevState,
-        selectedProjectId: undefined,
-        projects: [...prevState.projects, newProject],
-      };
-    });
-  }
-
-  function handleDeleteProject() {
-    setProjectsState((prevState) => {
-      return {
-        ...prevState,
-        selectedProjectId: undefined,
-        projects: prevState.projects.filter(
-          (project) => project.id !== prevState.selectedProjectId
-        ),
-      };
-    });
-  }
-
-  const selectedProject = projectsState.projects.find(
-    (project) => project.id === projectsState.selectedProjectId
-  );
-
-  let content = (
-    <SelectedProject
-      project={selectedProject}
-      onDelete={handleDeleteProject}
-      onAddTask={handleAddTask}
-      onDeleteTask={handleDeleteTask}
-      tasks={projectsState.tasks}
-    />
-  );
-
-  if (projectsState.selectedProjectId === null) {
-    content = (
-      <NewProject onAdd={handleAddProject} onCancel={handleCancelAddProject} />
-    );
-  } else if (projectsState.selectedProjectId === undefined) {
-    content = <NoProjectSelected onStartAddProject={handleStartAddProject} />;
-  }
-
-  return (
-    <main className="h-screen my-8 flex gap-8">
-      <ProjectSidebar
-        onStartAddProject={handleStartAddProject}
-        projects={projectsState.projects}
-        onSelectProject={handleSelectProject}
-        selectedProjectId={projectsState.selectedProjectId}
-      />
-      {content}
-    </main>
-  );
 }
 
-export default App;
+export default function ShoppingCart() {
+  const [state, dispatch] = useReducer(cartReducer, initialState);
+  const total = state.cart.reduce((acc, item) => acc + item.price, 0);
+
+  const addItemToCart = (item) => {
+    dispatch({ type: 'ADD_ITEM', payload: item });
+  };
+
+  const removeItemFromCart = (id) => {
+    dispatch({ type: 'REMOVE_ITEM', payload: id });
+  };
+
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+  };
+
+  return (
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-2">🛍️ Carrito de Compras</h1>
+
+      <button
+        className="bg-green-500 text-white px-3 py-1 rounded mr-2"
+        onClick={() =>
+          addItemToCart({ id: Date.now(), name: `Producto nuevo ${Date.now()}`, price: Math.floor(Math.random() * 100) })
+        }
+      >
+        Agregar producto
+      </button>
+
+      <button
+        className="bg-red-500 text-white px-3 py-1 rounded"
+        onClick={clearCart}
+      >
+        Vaciar carrito
+      </button>
+
+      <ul className="mt-4">
+        {state.cart.map((item) => (
+          <li key={item.id} className="flex justify-between items-center mb-2">
+            {item.name}
+            <span className="text-gray-600">${item.price}</span>
+            <button
+              className="text-red-600"
+              onClick={() => removeItemFromCart(item.id)}
+            >
+              Quitar
+            </button>
+          </li>
+        ))}
+      </ul>
+      
+      {state.cart.length > 0 && (
+        <div className="mt-4">
+          <h2 className="text-lg font-bold">Resumen de compra</h2>
+          <p>Total: ${total}</p>
+        </div>
+      )}
+
+      {/* Mensaje si el carrito está vacío */}
+
+      {state.cart.length === 0 && (
+        <p className="text-gray-500 mt-4">El carrito está vacío</p>
+      )}
+    </div>
+  );
+}
