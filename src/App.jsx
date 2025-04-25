@@ -1,32 +1,5 @@
-import React, { useReducer } from 'react';
-
-// Estado inicial
-const initialState = {
-  cart: [],
-};
-
-// Reducer
-function cartReducer(state, action) {
-  switch (action.type) {
-    case 'ADD_ITEM':
-      return {
-        ...state,
-        cart: [...state.cart, action.payload],
-      };
-    case 'REMOVE_ITEM':
-      return {
-        ...state,
-        cart: state.cart.filter(item => item.id !== action.payload),
-      };
-    case 'CLEAR_CART':
-      return {
-        ...state,
-        cart: [],
-      };
-    default:
-      return state;
-  }
-}
+import { useReducer } from 'react';
+import { cartReducer, initialState } from "./reducers/cartReducer";
 
 export default function ShoppingCart() {
   const [state, dispatch] = useReducer(cartReducer, initialState);
